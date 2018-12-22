@@ -21,7 +21,7 @@ GORELEASER = false
 SECRETS    = true
 
 ## Custom Go linker flags:
-LDFLAGS = -X github.com/stevenxie/$(PKG_NAME)/cmd.Version=$(VERSION)
+LDFLAGS = -X github.com/stevenxie/$(PKG_NAME)/cmd/info.Version=$(VERSION)
 
 
 ## Source configs:

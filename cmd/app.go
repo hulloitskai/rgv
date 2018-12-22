@@ -1,14 +1,14 @@
 package cmd
 
-import "fmt"
+import (
+	"fmt"
 
-// Version is the program version, set during compile time using:
-//   -ldflags -X github.com/stevenxie/nightwatch/main.Version=$(VERSION)
-var Version = "unset"
+	"github.com/stevenxie/rgv/cmd/info"
+)
 
-// Exec is the entrypoint to command nightwatch.
+// Exec is the entrypoint to command rgv.
 func Exec() {
 	loadEnv() // load .env variables
 
-	fmt.Printf("RGV: %s\n", Version)
+	fmt.Printf("RGV: %s\n", info.Version)
 }
