@@ -1,7 +1,7 @@
 ## [Repository]
 coverage.out
 
-## The compiled binary (excluding Go source files):
+## The compiled binary:
 /build/
 /dist/
 /*rgv*
