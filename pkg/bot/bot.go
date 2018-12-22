@@ -18,8 +18,8 @@ type Bot struct {
 	version, uagent string
 	l               *zap.SugaredLogger
 
-	Stop func()       // stops the Bot, if it is running
-	Wait func() error // block until the Bot stops, if it is running
+	stop func()       // stops the Bot, only set if it is running
+	wait func() error // block until the Bot stops, only set if it is running
 }
 
 // New returns a Bot that saves posts and comments from Reddit into the provided

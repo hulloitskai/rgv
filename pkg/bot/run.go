@@ -8,9 +8,27 @@ import (
 	ess "github.com/unixpickle/essentials"
 )
 
+// Stop stops the Bot, if it is running.
+func (b *Bot) Stop() {
+	if b.stop != nil {
+		b.stop()
+		b.stop = nil
+	}
+}
+
+// Wait blocks until the Bot has finished running, if it is running.
+func (b *Bot) Wait() error {
+	if b.wait != nil {
+		err := b.wait()
+		b.wait = nil
+		return err
+	}
+	return nil
+}
+
 // IsActive returns true if the Bot is currently running.
 func (b *Bot) IsActive() bool {
-	return b.Stop != nil
+	return b.stop != nil
 }
 
 // Run runs the Bot on the specified subreddit. It scans for new activity on
@@ -57,7 +75,7 @@ func (b *Bot) Run(subreddit string, rate time.Duration) error {
 		Subreddits:        []string{subreddit},
 		SubredditComments: []string{subreddit},
 	}
-	b.Stop, b.Wait, err = graw.Scan(b, client, cfg)
+	b.stop, b.wait, err = graw.Scan(b, client, cfg)
 	ess.AddCtxTo("bot: performing graw scan", &err)
 	return err
 }
