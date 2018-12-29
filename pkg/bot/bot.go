@@ -8,6 +8,7 @@ import (
 	"go.uber.org/zap"
 
 	"github.com/stevenxie/rgv/cmd/info"
+	ess "github.com/unixpickle/essentials"
 )
 
 // A Bot is capable of receiving events from Reddit (as a logged-in account, or
@@ -42,17 +43,14 @@ func New(r Receiver, logger *zap.SugaredLogger) (*Bot, error) {
 	// Read creds from environment.
 	c, err := readCreds()
 	if err != nil {
-		return nil, err
+		return nil, ess.AddCtx("bot", err)
 	}
 
 	// Only accept valid auth configurations.
-	if !c.IsValid() {
-		c = nil
-		err = &Error{
-			Code: InvalidConfig,
-			msg:  "bot: environment does not contain valid auth configuration",
-		}
+	if err = c.Validate(); err != nil {
+		return nil, ess.AddCtx("bot: validating credentials", err)
 	}
+
 	return &Bot{
 		rec:     r,
 		creds:   c,

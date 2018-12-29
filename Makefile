@@ -14,7 +14,7 @@ OUTDIR  = "."
 ## Enable Go modules for this project.
 MODULE    = true
 ## Enable `go generate` for this project.
-GENERATE   = true
+GENERATE   = false
 ## Enable goreleaser for this project.
 GORELEASER = false
 ## Enable git-secret for this project.
@@ -153,7 +153,7 @@ RUN_CMD = \
 	  echo 'Configuring environment variables by sourcing ".env.sh"...' && \
 	  . .env.sh && \
 	  printf "done\n\n"; \
-	fi; \
+	fi && \
 	if [ -f "$(OUTPATH)" ]; then \
 	  echo 'Running "$(PKG_NAME)"...' && \
 	  ./$(OUTPATH); \

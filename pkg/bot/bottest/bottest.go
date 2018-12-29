@@ -35,14 +35,7 @@ func main() {
 
 	b, err := bot.New(sp, logger.Sugar())
 	if err != nil {
-		switch val := err.(type) {
-		case *bot.Error:
-			if val.Code != bot.InvalidConfig {
-				ess.Die("Unknown bot creation error:", err)
-			}
-		default:
-			ess.Die("Failed to create bot:", err)
-		}
+		ess.Die("Failed to create bot:", err)
 	}
 
 	if err = b.Run(target, rate); err != nil {

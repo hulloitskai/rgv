@@ -1,8 +1,9 @@
 package stream
 
 import (
-	"bytes"
+	"fmt"
 	"net/http"
+	"os"
 
 	"go.uber.org/zap"
 
@@ -12,38 +13,100 @@ import (
 // Streamer responds to http requests by streaming activity from a particular
 // subreddit.
 type Streamer struct {
-	buf      *bytes.Buffer
+	*botMan
+
 	upgrader *ws.Upgrader
 	l        *zap.SugaredLogger
 }
 
 // NewStreamer creates a new Streamer that logs to logger (which may be nil).
-func NewStreamer(logger *zap.SugaredLogger) *Streamer {
-	return &Streamer{
-		buf:      new(bytes.Buffer),
-		upgrader: new(ws.Upgrader), // use default upgrader options
-		l:        logger,
+func NewStreamer(logger *zap.SugaredLogger) (*Streamer, error) {
+	// Derive logger for botMan.
+	var bml *zap.SugaredLogger
+	if logger != nil {
+		bml = logger.Named("botMan")
 	}
+
+	bm, err := newBotMan(bml)
+	if err != nil {
+		return nil, err
+	}
+
+	// Create upgrader based on GO_ENV.
+	upgrader := new(ws.Upgrader)
+	if os.Getenv("GO_ENV") == "development" {
+		upgrader.CheckOrigin = func(*http.Request) bool { return true }
+	}
+
+	return &Streamer{
+		botMan:   bm,
+		upgrader: upgrader,
+		l:        logger,
+	}, nil
 }
 
 func (s *Streamer) ServeHTTP(w http.ResponseWriter, r *http.Request) {
-	// Guard against bad origin.
-	if r.Header.Get("Origin") != "http://"+r.Host {
-		http.Error(w, "Origin not allowed.", http.StatusForbidden)
-		return
-	}
-
 	// Upgrade connection to TLS protocol.
 	conn, err := s.upgrader.Upgrade(w, r, nil)
 	if err != nil {
 		s.errResp(w, "Failed to upgrade connection: %v", err)
 		return
 	}
-	defer conn.Close()
 
-	// TODO: Actually stream data into the socket.
+	// Log request origin.
+	if s.l != nil {
+		s.l.Debugf("Got a connection from: %s", r.Header.Get("Origin"))
+	}
 
-	if err = conn.Close(); err != nil {
-		s.errOrPanic("Failed to close websocket connection: %v", err)
+	var confmsg struct {
+		Subreddit string `json:"subreddit"`
+	}
+	var jsonErr struct {
+		Error string `json:"error"`
+	}
+	if err = conn.ReadJSON(&confmsg); err != nil {
+		if s.l != nil {
+			s.l.Errorf("Error reading initial config message as JSON: %v", err)
+		}
+		jsonErr.Error = "bad initial config message: " + err.Error()
+
+		// Send error to conn.
+		if err = conn.WriteJSON(&jsonErr); (s.l != nil) && (err != nil) {
+			s.l.Errorf("Error while reporting config error: %v", err)
+		}
+
+		if err = conn.Close(); (s.l != nil) && (err != nil) {
+			s.l.Errorf("Error closing connection: %v", err)
+		}
+		return
+	}
+
+	if err = s.botMan.Subscribe(conn, confmsg.Subreddit); err != nil {
+		if s.l != nil {
+			s.l.Errorf("Error while subscribing client to subreddit '%s': %v",
+				confmsg.Subreddit, err)
+		}
+		jsonErr.Error = fmt.Sprintf("failed to subscribe client: %v", err)
+
+		if err = conn.WriteJSON(&jsonErr); (s.l != nil) && (err != nil) {
+			s.l.Errorf("Error while reporting subscription error: %v", err)
+		}
+
+		if err = conn.Close(); (s.l != nil) && (err != nil) {
+			s.l.Errorf("Error closing connection: %v", err)
+		}
+		return
+	}
+}
+
+// errResp writes an error to both w and Streamer's internal logger.
+//
+// It sets the response status code (for w) to 500 (Internal Server Error).
+func (s *Streamer) errResp(w http.ResponseWriter, format string,
+	a ...interface{}) {
+	msg := fmt.Sprintf(format, a...)
+	http.Error(w, msg, http.StatusInternalServerError)
+	if s.l != nil {
+		s.l.Error(msg)
 	}
 }

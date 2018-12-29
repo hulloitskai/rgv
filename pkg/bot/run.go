@@ -41,7 +41,14 @@ func (b *Bot) Run(subreddit string, rate time.Duration) error {
 
 	// Create a bot-style client if auth information is available and valid, and
 	// a script-style client with reduced polling capabilities otherwise.
-	if b.creds.IsValid() {
+	if b.creds.IsEmpty() {
+		// Validate rate.
+		if rate < (2 * time.Second) {
+			rate = 2 * time.Second
+		}
+
+		client, err = reddit.NewScript(b.UserAgent(), rate)
+	} else {
 		// Validate rate.
 		if rate < time.Second {
 			rate = time.Second
@@ -50,24 +57,20 @@ func (b *Bot) Run(subreddit string, rate time.Duration) error {
 		cfg := reddit.BotConfig{
 			Agent: b.UserAgent(),
 			App: reddit.App{
-				ID:     b.creds.ClientID,
-				Secret: b.creds.Secret,
+				ID:       b.creds.ClientID,
+				Secret:   b.creds.Secret,
+				Username: b.creds.User,
+				Password: b.creds.Pass,
 			},
 			Rate: rate,
 		}
-		client, err = reddit.NewBot(cfg)
-	} else {
-		// Validate rate.
-		if rate < (2 * time.Second) {
-			rate = 2 * time.Second
-		}
 
-		client, err = reddit.NewScript(b.UserAgent(), rate)
+		client, err = reddit.NewBot(cfg)
 	}
 
 	// Check for client-creation error.
 	if err != nil {
-		return ess.AddCtx("bot: creating Reddit client (script): %v", err)
+		return ess.AddCtx("bot: creating Reddit client (script)", err)
 	}
 
 	// Configure and run client using graw, with b as the handler.
@@ -75,7 +78,7 @@ func (b *Bot) Run(subreddit string, rate time.Duration) error {
 		Subreddits:        []string{subreddit},
 		SubredditComments: []string{subreddit},
 	}
+
 	b.stop, b.wait, err = graw.Scan(b, client, cfg)
-	ess.AddCtxTo("bot: performing graw scan", &err)
-	return err
+	return ess.AddCtx("bot: performing graw scan", err)
 }
