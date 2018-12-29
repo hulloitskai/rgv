@@ -2,10 +2,13 @@
   <div class="home">
     <h1>Home</h1>
     <form @submit.prevent="gotoVisualizer">
-      <label>
-        Subreddit:
-        <input v-model="subreddit" type="text" placeholder="uwaterloo" />
-      </label>
+      <label for="subreddit">Subreddit:</label>
+      <input
+        id="subreddit"
+        type="text"
+        v-model="subreddit"
+        placeholder="uwaterloo"
+      />
       <button type="submit">Visualize</button>
     </form>
   </div>

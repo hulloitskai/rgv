@@ -47,12 +47,11 @@ func (sb *streamBot) ReceiveComment(c *reddit.Comment) error {
 // error description.
 func (sb *streamBot) BroadcastJSON(v interface{}, desc string) error {
 	var err error
-	sb.Listeners.Range(func(c *ws.Conn) bool {
-		// FIXME: Redesign streamBot to eliminate concurrent c.WriteJSON calls.
-		if cerr := c.WriteJSON(v); cerr != nil {
+	sb.Listeners.Range(func(sc *syncConn) bool {
+		if cerr := sc.WriteJSON(v); cerr != nil {
 			if ws.IsCloseError(cerr) ||
 				strings.Contains(cerr.Error(), syscall.EPIPE.Error()) {
-				sb.Listeners.Delete(c)
+				sb.Listeners.Delete(sc)
 				return true
 			}
 
@@ -67,14 +66,37 @@ func (sb *streamBot) BroadcastJSON(v interface{}, desc string) error {
 // DisconnectAll disconnects all listeners from the streamBot.
 func (sb *streamBot) DisconnectAll() error {
 	var err error
-	sb.Listeners.Range(func(c *ws.Conn) bool {
+	sb.Listeners.Range(func(sc *syncConn) bool {
 		if err == nil {
-			err = c.Close()
+			err = sc.C.Close()
 		}
-		sb.Listeners.Delete(c)
+		sb.Listeners.Delete(sc)
 		return true
 	})
 	return err
+}
+
+// AddListener adds a websocket connection to streamBot.
+func (sb *streamBot) AddListener(c *ws.Conn) {
+	sb.Listeners.Store(&syncConn{C: c})
+}
+
+//////////////
+// syncConn
+//////////////
+
+// A syncConn wraps a websocket connection with special methods that synchronize
+// concurrent writes to the websocket.
+type syncConn struct {
+	C   *ws.Conn
+	mux sync.Mutex
+}
+
+// WriteJSON calls sc.C.WriteJSON. It is concurrent-safe.
+func (sc *syncConn) WriteJSON(v interface{}) error {
+	sc.mux.Lock()
+	defer sc.mux.Unlock()
+	return sc.C.WriteJSON(v)
 }
 
 ///////////////
@@ -88,18 +110,18 @@ type socketSet struct {
 	sm sync.Map
 }
 
-func (ss *socketSet) Delete(c *ws.Conn) {
-	ss.sm.Delete(c)
+func (ss *socketSet) Delete(sc *syncConn) {
+	ss.sm.Delete(sc)
 }
 
-func (ss *socketSet) Range(f func(c *ws.Conn) bool) {
+func (ss *socketSet) Range(f func(*syncConn) bool) {
 	ss.sm.Range(func(key, _ interface{}) bool {
-		return f(key.(*ws.Conn))
+		return f(key.(*syncConn))
 	})
 }
 
-func (ss *socketSet) Store(c *ws.Conn) {
-	ss.sm.Store(c, empty{})
+func (ss *socketSet) Store(sc *syncConn) {
+	ss.sm.Store(sc, empty{})
 }
 
 // Len returns the number of elements in the set. It has an O(n) time

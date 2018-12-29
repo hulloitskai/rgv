@@ -60,12 +60,12 @@ func (bm *botMan) Subscribe(c *ws.Conn, subreddit string) error {
 		if bm.l != nil {
 			bm.l.Debugf("Added a listener (%p) to the bot for '%s'.", c, subreddit)
 		}
-		bot.Listeners.Store(c)
+		bot.AddListener(c)
 		return nil
 	}
 
 	// No bot exists for the specified subreddit, so create one.
-	// TODO: Ensure that invalid subreddits are caught as an error.
+	// FIXME: Prevent the creation of invalid subreddits.
 	if bm.l != nil {
 		bm.l.Infof("Creating bot for subreddit '%s'.", subreddit)
 	}
@@ -98,7 +98,7 @@ func (bm *botMan) Subscribe(c *ws.Conn, subreddit string) error {
 			bm.l.Infof("Bot for subreddit '%s' successfully created.", subreddit)
 		}
 	}
-	bot.Listeners.Store(c)
+	bot.AddListener(c)
 	return nil
 }
 
