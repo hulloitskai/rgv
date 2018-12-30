@@ -3,6 +3,10 @@ import App from "./App.vue";
 import router from "./router";
 import store from "./store";
 
+// Install plugins:
+import VTooltip from "v-tooltip";
+Vue.use(VTooltip);
+
 // Uncomment to enable PWA capabilities:
 //import "./registerServiceWorker";
 

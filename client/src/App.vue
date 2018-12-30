@@ -3,6 +3,9 @@
 </template>
 
 <style lang="scss">
+@import "@/styles/_tooltip.scss";
+@import url("https://rsms.me/inter/inter-ui.css");
+
 body {
   // Normalize spacing in body and fonts.
   padding: 0;
@@ -14,8 +17,19 @@ body {
     padding: 0;
   }
 
-  // Configure smoothing.
+  // Configure fonts.
+  font-family: "Inter UI", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto,
+    Oxygen, Ubuntu, Cantarell, "Open Sans", "Helvetica Neue", sans-serif;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
+}
+
+// prettier-ignore
+.flex { display: flex; }
+// prettier-ignore
+.col { flex-direction: column; }
+// pretter-ignore
+.center {
+  align-items: center;
 }
 </style>

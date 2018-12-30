@@ -28,6 +28,14 @@ git-secret() {
 }
 git-secret || exit $?
 
+## [YARN LINT]
+## Lint client code.
+yarn-lint() {
+  echo # visual separator
+  cd client/ && yarn lint || return $?
+}
+yarn-lint || exit $?
+
 
 ## [AFTER]
 ## Check number of staged file after pre-commit actions.
