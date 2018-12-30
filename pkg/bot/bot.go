@@ -33,6 +33,9 @@ func New(r Receiver, logger *zap.SugaredLogger) (*Bot, error) {
 	if r == nil {
 		return nil, errors.New("bot: cannot make Bot with a nil Receiver")
 	}
+	if logger == nil {
+		logger = zap.NewNop().Sugar()
+	}
 
 	// Configure version string.
 	version := "unset"

@@ -7,6 +7,7 @@ import (
 	"go.uber.org/zap"
 
 	"github.com/stevenxie/rgv/pkg/stream"
+	ess "github.com/unixpickle/essentials"
 )
 
 // Server is the API server for rgv.
@@ -32,6 +33,7 @@ func NewServer(logger *zap.SugaredLogger) (*Server, error) {
 	return &Server{
 		Server:   &http.Server{Handler: streamer},
 		Streamer: streamer,
+		l:        logger,
 	}, nil
 }
 
@@ -42,12 +44,17 @@ func (s *Server) Shutdown(ctx context.Context) error {
 	go func() { ch <- s.Server.Shutdown(ctx) }()
 	go func() { ch <- s.Streamer.Shutdown(ctx) }()
 
+	var err error
 	select {
 	case <-ctx.Done():
 		<-ch
 		<-ch
-		return ctx.Err()
-	case err := <-ch:
-		return err
+		err = ctx.Err()
+	case err = <-ch:
 	}
+
+	if serr := s.l.Sync(); err == nil {
+		err = ess.AddCtx("server: final logger sync", serr)
+	}
+	return err
 }

@@ -17,17 +17,26 @@ import (
 // A streamBot is a Bot which streams data from Reddit to a set of websocket
 // listeners.
 //
-// It is concurrent-safe: listeners may be added / removed concurrently.
+// It is concurrent-safe; listeners may be added / removed concurrently.
 type streamBot struct {
 	*bot.Bot
 	Listeners *socketSet // concurrent-safe
+
+	l *zap.SugaredLogger
 }
 
 // newStreamBot returns a new streamBot.
 func newStreamBot(logger *zap.SugaredLogger) (*streamBot, error) {
-	sb := &streamBot{Listeners: new(socketSet)}
+	if logger == nil {
+		logger = zap.NewNop().Sugar()
+	}
+	sb := &streamBot{
+		Listeners: new(socketSet),
+		l:         logger,
+	}
+
 	var err error
-	sb.Bot, err = bot.New(sb, logger)
+	sb.Bot, err = bot.New(sb, logger.Named("Bot"))
 	return sb, err
 }
 
@@ -51,6 +60,7 @@ func (sb *streamBot) BroadcastJSON(v interface{}, desc string) error {
 		if cerr := sc.WriteJSON(v); cerr != nil {
 			if ws.IsCloseError(cerr) ||
 				strings.Contains(cerr.Error(), syscall.EPIPE.Error()) {
+				sb.l.Debugf("Listener (%p) is dead, removing...", &sc.C)
 				sb.Listeners.Delete(sc)
 				return true
 			}
@@ -67,8 +77,12 @@ func (sb *streamBot) BroadcastJSON(v interface{}, desc string) error {
 func (sb *streamBot) DisconnectAll() error {
 	var err error
 	sb.Listeners.Range(func(sc *syncConn) bool {
-		if err == nil {
-			err = sc.C.Close()
+		cerr := sc.C.Close()
+		if cerr != nil {
+			sb.l.Errorf("Failed to close listener (%p): %v", &sc.C, cerr)
+		}
+		if err == nil { // only return first-encountered error
+			err = cerr
 		}
 		sb.Listeners.Delete(sc)
 		return true

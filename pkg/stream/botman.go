@@ -2,6 +2,7 @@ package stream
 
 import (
 	"context"
+	"fmt"
 	"sync"
 	"time"
 
@@ -15,7 +16,7 @@ import (
 const (
 	// DefaultBotRate is the default Reddit-polling rate for a bot created by
 	// botMan.
-	DefaultBotRate = 5 * time.Second
+	DefaultBotRate = 10 * time.Second
 
 	// DefaultPruneInterval is the default empty-bot-pruning interval.
 	DefaultPruneInterval = 10 * time.Minute
@@ -38,6 +39,10 @@ type botMan struct {
 
 // newBotMan returns a new botMan.
 func newBotMan(logger *zap.SugaredLogger) (*botMan, error) {
+	if logger == nil {
+		logger = zap.NewNop().Sugar()
+	}
+
 	var cfg botManConfig
 	if err := envconfig.Process(Namespace, &cfg); err != nil {
 		return nil, err
@@ -55,27 +60,38 @@ func newBotMan(logger *zap.SugaredLogger) (*botMan, error) {
 // Subscribes subscribes a websocket connection to a bot.Bot monitoring a
 // particular subreddit. It is concurrent-safe.
 func (bm *botMan) Subscribe(c *ws.Conn, subreddit string) error {
-	// If a Bot for exists for the target subreddit, add c as a listener.
+	// If a bot exists for the target subreddit, add c as a listener.
 	if bot, ok := bm.bots.Load(subreddit); ok {
-		if bm.l != nil {
-			bm.l.Debugf("Added a listener (%p) to the bot for '%s'.", c, subreddit)
-		}
+		bm.l.Debugf("Added a listener (%p) to the bot for '%s'.", c, subreddit)
 		bot.AddListener(c)
 		return nil
 	}
 
 	// No bot exists for the specified subreddit, so create one.
-	// FIXME: Prevent the creation of invalid subreddits.
-	if bm.l != nil {
-		bm.l.Infof("Creating bot for subreddit '%s'.", subreddit)
+	bm.l.Infof("Creating bot for subreddit '%s'.", subreddit)
+
+	// Ensure that the request subreddit exists before creating a bot to
+	// monitor it.
+	exists, err := validateSubreddit(subreddit)
+	if err != nil {
+		return ess.AddCtx("validating subreddit", err)
 	}
-	var logger *zap.SugaredLogger
-	if bm.l != nil {
-		logger = bm.l.Named("streamBot::" + subreddit)
+	if !exists {
+		bm.l.Debugf("Request subreddit '%s' does not exist. Reporting error...",
+			subreddit)
+		jerr := jsonError{fmt.Sprintf("subreddit '%s' does not exist", subreddit)}
+
+		if err = c.WriteJSON(&jerr); err != nil {
+			bm.l.Errorf("Error while reporting invalid subreddit: %v", err)
+		}
+		if err = c.Close(); err != nil {
+			bm.l.Errorf("Error while closing connection: %v", err)
+		}
+		return nil
 	}
 
 	// Create and run bot.
-	bot, err := newStreamBot(logger)
+	bot, err := newStreamBot(bm.l.Named(fmt.Sprintf(`streamBot["%s"]`, subreddit)))
 	if err != nil {
 		return ess.AddCtx("creating streamBot", err)
 	}
@@ -88,15 +104,11 @@ func (bm *botMan) Subscribe(c *ws.Conn, subreddit string) error {
 	// been concurrently added during the creation of this bot.
 	if other, ok := bm.bots.Load(subreddit); ok {
 		bot = other
-		if bm.l != nil {
-			bm.l.Infof("Found other bot for subreddit '%s', aborting bot creation.",
-				subreddit)
-		}
+		bm.l.Infof("Found other bot for subreddit '%s', aborting bot creation.",
+			subreddit)
 	} else {
 		bm.bots.Store(subreddit, bot)
-		if bm.l != nil {
-			bm.l.Infof("Bot for subreddit '%s' successfully created.", subreddit)
-		}
+		bm.l.Infof("Bot for subreddit '%s' successfully created.", subreddit)
 	}
 	bot.AddListener(c)
 	return nil
@@ -105,7 +117,7 @@ func (bm *botMan) Subscribe(c *ws.Conn, subreddit string) error {
 // monitorBot waits for sb to finish running, disconnects sb's listeners, and
 // removes sb from bm.bots.
 func (bm *botMan) monitorBot(sb *streamBot, subreddit string) {
-	if err := sb.Wait(); (bm.l != nil) && (err != nil) {
+	if err := sb.Wait(); err != nil {
 		bm.l.Errorf("streamBot monitoring subreddit '%s' exited with an error: %v",
 			subreddit, err)
 	}
@@ -115,10 +127,8 @@ func (bm *botMan) monitorBot(sb *streamBot, subreddit string) {
 			"subreddit '%s': %v", subreddit, err)
 	}
 
-	if bm.l != nil {
-		bm.l.Infof("Bot for subreddit '%s' has finished running. Removing from "+
-			"botMan...", subreddit)
-	}
+	bm.l.Infof("Bot for subreddit '%s' has finished running. Removing from "+
+		"botMan...", subreddit)
 	bm.bots.Delete(subreddit)
 }
 
@@ -134,10 +144,7 @@ func (bm *botMan) pruneBots() {
 		case <-bm.pruneTicker.C:
 			bm.bots.Range(func(subreddit string, bot *streamBot) bool {
 				if bot.Listeners.Len() == 0 {
-					if bm.l != nil {
-						bm.l.Infof("Bot for subreddit '%s' is empty, stopping...",
-							subreddit)
-					}
+					bm.l.Infof("Bot for subreddit '%s' is empty, stopping...", subreddit)
 					bot.Stop()
 				}
 				return true
@@ -161,7 +168,7 @@ func (bm *botMan) Shutdown(ctx context.Context) error {
 			err = ctx.Err()
 			return false
 		default:
-			if err := bot.DisconnectAll(); (err != nil) && (bm.l != nil) {
+			if err := bot.DisconnectAll(); err != nil {
 				bm.l.Errorf("Error while disconnecting all listeners: %v", err)
 			}
 			return true

@@ -14,20 +14,17 @@ import (
 // subreddit.
 type Streamer struct {
 	*botMan
-
 	upgrader *ws.Upgrader
 	l        *zap.SugaredLogger
 }
 
 // NewStreamer creates a new Streamer that logs to logger (which may be nil).
 func NewStreamer(logger *zap.SugaredLogger) (*Streamer, error) {
-	// Derive logger for botMan.
-	var bml *zap.SugaredLogger
-	if logger != nil {
-		bml = logger.Named("botMan")
+	if logger == nil {
+		logger = zap.NewNop().Sugar()
 	}
 
-	bm, err := newBotMan(bml)
+	bm, err := newBotMan(logger.Named("botMan"))
 	if err != nil {
 		return nil, err
 	}
@@ -54,45 +51,35 @@ func (s *Streamer) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// Log request origin.
-	if s.l != nil {
-		s.l.Debugf("Got a connection from: %s", r.Header.Get("Origin"))
-	}
+	s.l.Debugf("Got a connection from: %s", r.Header.Get("Origin"))
 
 	var confmsg struct {
 		Subreddit string `json:"subreddit"`
 	}
-	var jsonErr struct {
-		Error string `json:"error"`
-	}
 	if err = conn.ReadJSON(&confmsg); err != nil {
-		if s.l != nil {
-			s.l.Errorf("Error reading initial config message as JSON: %v", err)
-		}
-		jsonErr.Error = "bad initial config message: " + err.Error()
+		s.l.Errorf("Error reading initial config message as JSON: %v", err)
+		jerr := jsonError{"bad initial config message: " + err.Error()}
 
 		// Send error to conn.
-		if err = conn.WriteJSON(&jsonErr); (s.l != nil) && (err != nil) {
+		if err = conn.WriteJSON(&jerr); err != nil {
 			s.l.Errorf("Error while reporting config error: %v", err)
 		}
 
-		if err = conn.Close(); (s.l != nil) && (err != nil) {
+		if err = conn.Close(); err != nil {
 			s.l.Errorf("Error closing connection: %v", err)
 		}
 		return
 	}
 
 	if err = s.botMan.Subscribe(conn, confmsg.Subreddit); err != nil {
-		if s.l != nil {
-			s.l.Errorf("Error while subscribing client to subreddit '%s': %v",
-				confmsg.Subreddit, err)
-		}
-		jsonErr.Error = fmt.Sprintf("failed to subscribe client: %v", err)
+		s.l.Errorf("Error while subscribing client to subreddit '%s': %v",
+			confmsg.Subreddit, err)
+		jerr := jsonError{fmt.Sprintf("failed to subscribe client: %v", err)}
 
-		if err = conn.WriteJSON(&jsonErr); (s.l != nil) && (err != nil) {
+		if err = conn.WriteJSON(&jerr); err != nil {
 			s.l.Errorf("Error while reporting subscription error: %v", err)
 		}
-
-		if err = conn.Close(); (s.l != nil) && (err != nil) {
+		if err = conn.Close(); err != nil {
 			s.l.Errorf("Error closing connection: %v", err)
 		}
 		return
@@ -106,7 +93,5 @@ func (s *Streamer) errResp(w http.ResponseWriter, format string,
 	a ...interface{}) {
 	msg := fmt.Sprintf(format, a...)
 	http.Error(w, msg, http.StatusInternalServerError)
-	if s.l != nil {
-		s.l.Error(msg)
-	}
+	s.l.Error(msg)
 }

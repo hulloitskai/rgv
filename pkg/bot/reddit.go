@@ -13,16 +13,12 @@ type Receiver interface {
 
 // Post implements graw/botfaces.PostHandler.
 func (b *Bot) Post(p *red.Post) error {
-	if b.l != nil {
-		b.l.Debugf("Received Reddit post: %+v", p)
-	}
+	b.l.Debugf("Received Reddit post: %+v", p)
 	return b.rec.ReceivePost(reddit.ConvPost(p))
 }
 
 // Comment implements graw/botfaces.CommentHandler.
 func (b *Bot) Comment(c *red.Comment) error {
-	if b.l != nil {
-		b.l.Debugf("Received Reddit comment: %+v", c)
-	}
+	b.l.Debugf("Received Reddit comment: %+v", c)
 	return b.rec.ReceiveComment(reddit.ConvComment(c))
 }

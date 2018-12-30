@@ -32,7 +32,7 @@ git-secret || exit $?
 ## Lint client code.
 yarn-lint() {
   echo # visual separator
-  cd client/ && yarn lint || return $?
+  cd client/ && yarn lint
 }
 yarn-lint || exit $?
 

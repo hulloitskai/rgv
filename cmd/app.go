@@ -65,7 +65,6 @@ func Exec() {
 	}
 }
 
-// TODO: Implement gracefully closing websocket connections.
 func shutdownUponInterrupt(s *api.Server) {
 	const timeout = 1 * time.Second
 
