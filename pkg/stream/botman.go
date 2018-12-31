@@ -27,6 +27,17 @@ type botManConfig struct {
 	PruneInterval time.Duration `split_words:"true"`
 }
 
+func readBotManConfig() (botManConfig, error) {
+	cfg := botManConfig{
+		Rate:          DefaultBotRate,
+		PruneInterval: DefaultPruneInterval,
+	}
+	if err := envconfig.Process(Namespace, &cfg); err != nil {
+		return botManConfig{}, err
+	}
+	return cfg, nil
+}
+
 // botMan manages a set of Reddit bots. It is concurrent-safe.
 type botMan struct {
 	Config botManConfig
@@ -43,8 +54,8 @@ func newBotMan(logger *zap.SugaredLogger) (*botMan, error) {
 		logger = zap.NewNop().Sugar()
 	}
 
-	var cfg botManConfig
-	if err := envconfig.Process(Namespace, &cfg); err != nil {
+	cfg, err := readBotManConfig()
+	if err != nil {
 		return nil, err
 	}
 
