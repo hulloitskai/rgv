@@ -3,7 +3,7 @@
 </template>
 
 <style lang="scss">
-@import "@/styles/_tooltip.scss";
+@import "@/styles/tooltip.scss";
 @import url("https://rsms.me/inter/inter-ui.css");
 
 body {

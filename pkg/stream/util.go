@@ -30,4 +30,5 @@ func validateSubreddit(name string) (exists bool, err error) {
 // jsonError represents a JSON error.
 type jsonError struct {
 	Error string `json:"error"`
+	Code  int    `json:"code,omitempty"`
 }

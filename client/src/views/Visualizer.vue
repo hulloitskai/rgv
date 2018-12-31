@@ -1,42 +1,185 @@
 <template>
   <div class="visualizer">
-    <h1 class="title">messages</h1>
-    <ul class="messages">
-      <li class="message" v-for="msg in messages" :key="msg.id">
-        {{ JSON.stringify(msg) }}
-      </li>
-    </ul>
+    <div class="graph-container" ref="graph-container" />
+    <div class="status flex center" :class="{ live: isLive }">
+      <div class="indicator" />
+      <p>live</p>
+    </div>
   </div>
 </template>
 
 <script>
-const API_URL = "ws://localhost:3000";
+import Streamer from "@/services/streamer";
+import * as JSNX from "jsnetworkx";
+import * as D3 from "d3";
+
+const { DiGraph } = JSNX;
 
 export default {
   data() {
-    const ws = new WebSocket(API_URL);
-    ws.onopen = event => {
-      console.log(`Websocket opened: ${event}`);
+    const { subreddit } = this.$route.params;
+    const graph = new DiGraph();
 
-      const { subreddit } = this.$route.params;
-      if (!subreddit) {
-        console.error("No subreddit found in boute params.");
+    return {
+      streamer: new Streamer(),
+      isLive: false,
+      graph,
+      subreddit,
+    };
+  },
+  methods: {
+    /** @param {Event} event */
+    handleMessage(event) {
+      const data = JSON.parse(event.data);
+      // console.log(data);
+
+      // Early return if message is an error.
+      const { error } = data;
+      if (error) {
+        alert(`Received error: ${error}`);
         return;
       }
 
-      const config = { subreddit: this.$route.params.subreddit };
-      this.ws.send(JSON.stringify(config));
-    };
-    ws.onclose = event => console.log(`Websocket closed: ${event}`);
-    ws.onerror = event => console.error(`Websocket emitted an error: ${event}`);
-    ws.onmessage = this.appendMessage;
+      // Message is a data point, add it to the graph.
+      const { graph } = this;
+      const { author, link_author: linkAuthor } = data;
 
-    return { messages: [], ws };
-  },
-  methods: {
-    appendMessage(msg) {
-      this.messages.push(JSON.parse(msg.data));
+      // Add author and linkAuthor to graph.
+      [author, linkAuthor].forEach(user => {
+        if (!user) return;
+
+        // Determine new node weight.
+        let weight = 1;
+        const node = graph.node.get(user);
+        if (node) weight = node.weight + 1;
+
+        graph.addNode(user, { weight });
+      });
+
+      // Create edges between link authors.
+      if (!linkAuthor) return;
+
+      const edgeData = graph.getEdgeData(author, linkAuthor, { weight: 0 });
+      graph.addEdge(author, linkAuthor, { weight: edgeData.weight + 1 });
     },
+    // TODO: Handle bot-in-creation status (yellow).
+    handleStatus(event) {
+      this.isLive = event.type === "open";
+    },
+  },
+  mounted() {
+    // Initialize graph drawing.
+    const { "graph-container": container } = this.$refs;
+    JSNX.draw(
+      this.graph,
+      {
+        withLabels: true,
+        weighted: true,
+        layoutAttr: {
+          gravity: 0.04,
+          linkStrength: 0.4,
+        },
+        nodeAttr: {
+          r: ({ data }) => data.weight * 5,
+          class: "node node-shape",
+        },
+        labelAttr: {
+          class: "node-label",
+          transform: ({ data }) => `translate(0, ${data.weight * 5 + 10})`,
+        },
+        edgeAttr: { class: "line edge" },
+        d3: D3,
+        element: container,
+      },
+      true
+    );
+
+    // Correct svg boundaries.
+    const svg = container.firstChild;
+    ["width", "height"].forEach(name => svg.setAttribute(name, "100%"));
+
+    // Start streamer.
+    const { streamer, subreddit } = this;
+    streamer.load(subreddit);
+    streamer.addEventListener("message", this.handleMessage);
+    ["open", "close"].forEach(type =>
+      streamer.addEventListener(type, this.handleStatus)
+    );
+  },
+  beforeDestroy() {
+    const { streamer } = this;
+    streamer.removeEventListener("message", this.handleMessage);
+    ["open", "close"].forEach(type =>
+      streamer.removeEventListener(type, this.handleStatus)
+    );
   },
 };
 </script>
+
+<style lang="scss" scoped>
+@import "@/styles/mixins.scss";
+
+// prettier-ignore
+.visualizer {
+  position: absolute;
+  left: 0; right: 0; top: 0; bottom: 0;
+}
+
+.graph-container {
+  width: 100%;
+  height: 100%;
+
+  /deep/ .node {
+    fill: #ff8300 !important;
+    stroke-width: 0 !important;
+  }
+
+  /deep/ .node-label {
+    fill: #666666 !important;
+  }
+
+  /deep/ .edge {
+    fill: #ffc180 !important;
+  }
+}
+
+.status {
+  $offset: 0.9em;
+  $phablet-offset: 1.25em;
+
+  position: absolute;
+  top: $offset;
+  left: $offset;
+  padding: 3px 6px;
+  border-radius: 12px;
+
+  background-color: rgb(240, 240, 240);
+  color: rgb(180, 180, 180);
+  font-size: 11pt;
+  font-weight: 500;
+
+  .indicator {
+    $radius: 12px;
+
+    width: $radius;
+    height: $radius;
+    margin-right: 5px;
+    border-radius: 100%;
+
+    background-color: rgb(243, 139, 139);
+    transition: background 200ms ease-in-out;
+  }
+
+  &.live {
+    color: grey;
+
+    // prettier-ignore
+    .indicator { background-color: rgb(71, 224, 148); }
+  }
+
+  @include breakpoint(phablet) {
+    top: $phablet-offset;
+    left: $phablet-offset;
+  }
+}
+</style>

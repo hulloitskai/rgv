@@ -79,7 +79,8 @@ func (bm *botMan) Subscribe(c *ws.Conn, subreddit string) error {
 	if !exists {
 		bm.l.Debugf("Request subreddit '%s' does not exist. Reporting error...",
 			subreddit)
-		jerr := jsonError{fmt.Sprintf("subreddit '%s' does not exist", subreddit)}
+		jerr := jsonError{fmt.Sprintf("subreddit '%s' does not exist", subreddit),
+			404}
 
 		if err = c.WriteJSON(&jerr); err != nil {
 			bm.l.Errorf("Error while reporting invalid subreddit: %v", err)
@@ -91,6 +92,7 @@ func (bm *botMan) Subscribe(c *ws.Conn, subreddit string) error {
 	}
 
 	// Create and run bot.
+	// TODO: Stream bot creation status to client.
 	bot, err := newStreamBot(bm.l.Named(fmt.Sprintf(`streamBot["%s"]`, subreddit)))
 	if err != nil {
 		return ess.AddCtx("creating streamBot", err)
@@ -117,6 +119,8 @@ func (bm *botMan) Subscribe(c *ws.Conn, subreddit string) error {
 // monitorBot waits for sb to finish running, disconnects sb's listeners, and
 // removes sb from bm.bots.
 func (bm *botMan) monitorBot(sb *streamBot, subreddit string) {
+	// TODO: Deal with automatically restarting the bot when it fails a Reddit
+	// request.
 	if err := sb.Wait(); err != nil {
 		bm.l.Errorf("streamBot monitoring subreddit '%s' exited with an error: %v",
 			subreddit, err)

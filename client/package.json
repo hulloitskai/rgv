@@ -6,10 +6,11 @@
     "dev": "yarn serve",
     "serve": "vue-cli-service serve",
     "build": "vue-cli-service build",
-    "lint": "vue-cli-service lint ./src/**/*.{vue,js} && prettier --write -l ./src/**/*.{scss,css}"
+    "lint": "vue-cli-service lint './src/**/*.{vue,js}' && prettier --write -l './src/**/*.{json,ssss,css}' './*.{js,json}'"
   },
   "dependencies": {
-    "lodash": "^4.17.11",
+    "d3": "^3.5.17",
+    "jsnetworkx": "^0.3.4",
     "prettier": "^1.15.3",
     "register-service-worker": "^1.5.2",
     "v-tooltip": "^2.0.0-rc.33",

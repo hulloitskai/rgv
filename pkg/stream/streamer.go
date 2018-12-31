@@ -58,7 +58,7 @@ func (s *Streamer) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	}
 	if err = conn.ReadJSON(&confmsg); err != nil {
 		s.l.Errorf("Error reading initial config message as JSON: %v", err)
-		jerr := jsonError{"bad initial config message: " + err.Error()}
+		jerr := jsonError{"bad initial config message: " + err.Error(), 400}
 
 		// Send error to conn.
 		if err = conn.WriteJSON(&jerr); err != nil {
@@ -74,7 +74,7 @@ func (s *Streamer) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	if err = s.botMan.Subscribe(conn, confmsg.Subreddit); err != nil {
 		s.l.Errorf("Error while subscribing client to subreddit '%s': %v",
 			confmsg.Subreddit, err)
-		jerr := jsonError{fmt.Sprintf("failed to subscribe client: %v", err)}
+		jerr := jsonError{Error: fmt.Sprintf("failed to subscribe client: %v", err)}
 
 		if err = conn.WriteJSON(&jerr); err != nil {
 			s.l.Errorf("Error while reporting subscription error: %v", err)
