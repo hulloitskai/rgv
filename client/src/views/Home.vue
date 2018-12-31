@@ -78,20 +78,20 @@ $gradient: linear-gradient(to top right, #b535f6, #376bf6);
 .card {
   $card-text-color: rgb(55, 55, 55);
 
-  padding: 20px;
-  border-radius: 10px;
+  padding: 1.6em;
+  border-radius: 0.5em;
 
   color: $card-text-color;
   background-color: white;
-  box-shadow: 3px 3px 10px 2px rgba(black, 0.2);
+  box-shadow: 0.3em 0.3em 0.9em 0.2em rgba(black, 0.2);
 
   .logo {
-    max-width: 200px;
+    max-width: 11em;
     width: 75vw;
   }
 
   .title {
-    margin: 5px 0 20px 0;
+    margin: 0.3em 0 1.3em 0;
 
     .description {
       font-weight: 600;
@@ -101,7 +101,7 @@ $gradient: linear-gradient(to top right, #b535f6, #376bf6);
   }
 
   form {
-    width: 200px;
+    width: 11.35em;
     display: flex;
     flex-direction: column;
 
@@ -112,13 +112,13 @@ $gradient: linear-gradient(to top right, #b535f6, #376bf6);
       $bg-color: rgb(227, 227, 227);
 
       width: 100%;
-      margin: 2px 0;
-      padding: 4px 6px;
+      margin: 0.2em 0;
+      padding: 0.35em 0.5em;
       box-sizing: border-box;
 
       outline: none;
       border: none;
-      border-radius: 4px;
+      border-radius: 0.3em;
 
       color: rgb(50, 50, 50);
       background-color: $bg-color;
@@ -139,15 +139,16 @@ $gradient: linear-gradient(to top right, #b535f6, #376bf6);
       $bg-color: #b45efa;
 
       align-self: center;
-      margin-top: 10px;
-      padding: 3px 7px;
+      margin-top: 0.7em;
+      padding: 0.3em 0.5em;
 
       outline: none;
       border: none;
-      border-radius: 4px;
+      border-radius: 0.4em;
 
       color: white;
       background-color: $bg-color;
+      box-shadow: 0.05em 0.05em 0.3em 0.02em rgba(black, 0.3);
       cursor: pointer;
 
       font-size: 10pt;

@@ -136,6 +136,7 @@ export default {
 
   /deep/ .node-label {
     fill: #666666 !important;
+    font-size: 11pt;
   }
 
   /deep/ .edge {
@@ -150,8 +151,8 @@ export default {
   position: absolute;
   top: $offset;
   left: $offset;
-  padding: 3px 6px;
-  border-radius: 12px;
+  padding: 0.2em 0.5em;
+  border-radius: 1em;
 
   background-color: rgb(240, 240, 240);
   color: rgb(180, 180, 180);
@@ -159,11 +160,11 @@ export default {
   font-weight: 500;
 
   .indicator {
-    $radius: 12px;
+    $radius: 0.75em;
 
     width: $radius;
     height: $radius;
-    margin-right: 5px;
+    margin-right: 0.3em;
     border-radius: 100%;
 
     background-color: rgb(243, 139, 139);
