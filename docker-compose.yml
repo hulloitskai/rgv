@@ -17,7 +17,6 @@ services:
         BUILD_VERSION: "${VERSION}"
       cache_from:
         - stevenxie/rgv.entrypoint:latest
-        - stevenxie/rgv.entrypoint:builder
         - alpine:3.8
     container_name: entrypoint
     command: ["-agree"]
@@ -39,7 +38,6 @@ services:
         BUILD_VERSION: "${VERSION}"
       cache_from:
         - stevenxie/rgv.api:latest
-        - stevenxie/rgv.api:builder
         - alpine:3.8
         - golang:alpine
     container_name: api

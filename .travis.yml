@@ -1,0 +1,57 @@
+services: docker
+
+env:
+  ## Required external variables:
+  ##   - DOCKER_USER, DOCKER_PASS
+  ##   - GH_TOKEN, GH_KUBECONFIG_PATH
+  global:
+    - DEPLOYMENTS="rgv-entrypoint rgv-api"
+    - DOCKER_COMPOSE_VERSION="1.23.2"
+    - RELEASE_BRANCH=master
+
+cache:
+  directories:
+    ## Preserve external tools.
+    - /opt/bin
+
+## Install external tools.
+before_install:
+  - export PATH=/opt/bin:$PATH
+  - echo "Contents of /opt/bin:" && ls -l /opt/bin
+  - |
+    if [ ! -x /opt/bin/docker-compose ]; then
+      echo "Installing docker-compose..." && \
+      VERSION="docker-compose-$(uname -s)-$(uname -m)"
+      curl -L "https://github.com/docker/compose/releases/download/${DOCKER_COMPOSE_VERSION}/${VERSION}" > docker-compose && \
+      chmod +x docker-compose && \
+      mv docker-compose /opt/bin/ && \
+      echo done
+    fi
+  - docker-compose version
+  - |
+    if [ ! -x /opt/bin/kubectl ]; then
+      echo "Installing kubectl..." && \
+      VERSION="$(curl -s https://storage.googleapis.com/kubernetes-release/release/stable.txt)" && \
+      curl -LO "https://storage.googleapis.com/kubernetes-release/release/${VERSION}/bin/linux/amd64/kubectl" && \
+      chmod +x ./kubectl && \
+      mv kubectl /opt/bin/kubectl && \
+      echo done
+    fi
+  - kubectl version --client
+  ## Fetch tags.
+  - git fetch --tags
+
+
+## Build images.
+install: make dk-build
+
+## Test to see if entrypoint returns 200.
+script: ./scripts/test.sh
+
+## Deploy to Docker Hub and Kubernetes.
+deploy:
+  provider: script
+  script: ./scripts/deploy.sh
+  skip-cleanup: true
+  on:
+    all_branches: true

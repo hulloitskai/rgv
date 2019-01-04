@@ -33,6 +33,18 @@
 vendor/
 
 
+## [IDEs]
+## VSCode (keeping workspace configurations):
+.vscode/*
+!.vscode/settings.json
+!.vscode/tasks.json
+# !.vscode/launch.json
+!.vscode/extensions.json
+
+## IntelliJ:
+.idea/
+
+
 ## [System Files]
 ## macOS:
 .DS_Store
@@ -41,13 +53,3 @@ vendor/
 
 ## Windows:
 Thumbs.db
-
-## VSCode (keeping workspace configurations):
-.vscode/*
-!.vscode/settings.json
-!.vscode/tasks.json
-#!.vscode/launch.json
-!.vscode/extensions.json
-
-## IntelliJ
-.idea/

@@ -24,18 +24,13 @@ SECRETS    = true
 LDFLAGS = -X github.com/stevenxie/$(PKG_NAME)/cmd/info.Version=$(VERSION)
 
 
-## Source configs:
-SRC_FILES = $(shell find . -type f -name '*.go' -not -path "./vendor/*")
-SRC_PKGS  = $(shell go list ./... | grep -v /vendor/)
-
-## Testing configs:
+## Testing config:
 TEST_TIMEOUT = 20s
 COVER_OUT    = coverage.out
 
 
-
 ## ----- COMMANDS -----
-.PHONY: default setup init
+.PHONY: default setup init version
 
 ## Default target when no arguments are given to make (build and run program).
 default: build-run
@@ -51,6 +46,9 @@ setup: hooks-setup
 ## Initializes this project from scratch.
 ## Variables: MODPATH
 init: mod-init secrets-init goreleaser-init
+
+version:
+	@echo $(VERSION)
 
 
 ## [Git, git-secret]
@@ -333,7 +331,7 @@ snapshot:
 
 
 ## [Docker]
-.PHONY: dk-build dk-push dk-build-push dk-retag dk-logs
+.PHONY: dk-build dk-push dk-build-push dk-retag dk-up dk-down dk-logs
 
 DK = docker
 DKCMP = docker-compose
@@ -342,12 +340,14 @@ DKCMP_ENV = VERSION=$(VERSION) $(DKCMP)
 ## SVC refers to the target Docker Compose service.
 SVC =
 dk-build:
-	echo "Building images..."
-	@$(DKCMP_ENV) build --parallel $(SVC) && $(DK_RETAG_CMD)
+	@echo "Building images..." && \
+	 $(DKCMP_ENV) build --parallel $(SVC) && \
+	 echo done && $(DK_RETAG_CMD)
 
 dk-push:
-	@$(DKCMP_ENV) push $(SVC)
-	@VERSION=latest $(DKCMP) push $(SVC)
+	@echo "Pushing images to registry..." && \
+	 $(DKCMP_ENV) push $(SVC) && VERSION=latest $(DKCMP) push $(SVC) && \
+	 echo done
 
 dk-build-push: dk-build dk-push
 
@@ -357,12 +357,22 @@ DK_RETAG_CMD = echo "Tagging versioned images with ':latest'..." && \
 	  if [ -z "$$($(DK) images -q "$$image" 2> /dev/null)" ]; then \
 	    continue; \
 	  fi && \
-	  LAT_TAG="$$(sed -e 's/:.*$$/:latest/' <<< "$$image")" && \
+	  LAT_TAG="$$(echo "$$image" | sed -e 's/:.*$$/:latest/')" && \
 	  $(DK) tag "$$image" "$$LAT_TAG"; \
 	done && \
 	echo done
 dk-retag:
 	@$(DK_RETAG_CMD)
+
+dk-up:
+	@echo "Bringing up services..." && \
+	 $(DKCMP_ENV) up && \
+	 echo done
+
+dk-down:
+	@echo "Bringinging down services..." && \
+	 $(DKCMP_ENV) down && \
+	 echo done
 
 dk-logs:
 	@$(DKCMP_ENV) logs $(SVC)

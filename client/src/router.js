@@ -17,6 +17,7 @@ export default new Router({
     {
       path: "/r/:subreddit/",
       name: "visualizer",
+      // TODO: Use @import to modularize the JS.
       component: Visualizer,
       pathToRegexpOptions: { strict: true },
     },
