@@ -1,0 +1,55 @@
+## This docker-compose config file is used to define build processes for the
+## images in this repository, and for development deployment.
+##
+## It is not meant for use in production deployments. See the deployment/
+## directory for production deployment configurations.
+
+version: "3.7"
+
+services:
+  entrypoint:
+    image: "stevenxie/rgv.entrypoint:${VERSION}"
+    build:
+      context: .
+      dockerfile: entrypoint.Dockerfile
+      args:
+        plugins: ""  # extra Caddy plugins to build into the image
+        BUILD_VERSION: "${VERSION}"
+      cache_from:
+        - stevenxie/rgv.entrypoint:latest
+        - stevenxie/rgv.entrypoint:builder
+        - alpine:3.8
+    container_name: entrypoint
+    command: ["-agree"]
+    environment:
+      - HOST=http://localhost:80
+      - API=http://api:3000
+      - GO_ENV=development
+    networks:
+      - public
+    ports:
+      - "8080:80" # for development
+
+  api:
+    image: "stevenxie/rgv.api:${VERSION}"
+    build:
+      context: .
+      dockerfile: api.Dockerfile
+      args:
+        BUILD_VERSION: "${VERSION}"
+      cache_from:
+        - stevenxie/rgv.api:latest
+        - stevenxie/rgv.api:builder
+        - alpine:3.8
+        - golang:alpine
+    container_name: api
+    depends_on:
+      - entrypoint
+    networks:
+      - public
+    ports:
+      - "3000:3000" # for development
+
+
+networks:
+  public:

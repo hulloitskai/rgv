@@ -330,3 +330,39 @@ release:
 snapshot:
 	@echo "Making snapshot with 'goreleaser'..." && \
 	   goreleaser --snapshot --rm-dist
+
+
+## [Docker]
+.PHONY: dk-build dk-push dk-build-push dk-retag dk-logs
+
+DK = docker
+DKCMP = docker-compose
+DKCMP_ENV = VERSION=$(VERSION) $(DKCMP)
+
+## SVC refers to the target Docker Compose service.
+SVC =
+dk-build:
+	echo "Building images..."
+	@$(DKCMP_ENV) build --parallel $(SVC) && $(DK_RETAG_CMD)
+
+dk-push:
+	@$(DKCMP_ENV) push $(SVC)
+	@VERSION=latest $(DKCMP) push $(SVC)
+
+dk-build-push: dk-build dk-push
+
+DK_RETAG_CMD = echo "Tagging versioned images with ':latest'..." && \
+	IMAGES="$$($(DKCMP_ENV) config | egrep image | awk '{print $$2}')" && \
+	for image in $$IMAGES; do \
+	  if [ -z "$$($(DK) images -q "$$image" 2> /dev/null)" ]; then \
+	    continue; \
+	  fi && \
+	  LAT_TAG="$$(sed -e 's/:.*$$/:latest/' <<< "$$image")" && \
+	  $(DK) tag "$$image" "$$LAT_TAG"; \
+	done && \
+	echo done
+dk-retag:
+	@$(DK_RETAG_CMD)
+
+dk-logs:
+	@$(DKCMP_ENV) logs $(SVC)

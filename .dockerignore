@@ -1,36 +1,40 @@
 ## [Repository]
-.env.local
-
-## The compiled binary:
-/build/
-/dist/
 /*rgv*
 !/*rgv*.*
 /*rgv*.exe
 
+## Client:
+/client/dist/
+/client/node_modules/
+
 ## Secrets:
 .env
 
-## git-secret:
-.gitsecret/keys/random_seed
-
 
 ## [Go]
-## Binaries for programs and plugins:
-*.exe
-*.exe~
-*.dll
-*.so
-*.dylib
+/dist/
+coverage.out
 
-## Test binary, build with `go test -c`.
-*.test
 
-## Output of the go coverage tool, specifically when used with LiteIDE.
-*.out
+## [JS]
+jsconfig.json
 
-## Vendored packages.
-vendor/
+
+## [Git]
+.gitignore
+
+## git-secret:
+.gitsecret/
+*.secret
+
+
+## [Docker]
+.dockerignore
+
+
+## [Miscellaneous]
+.editorconfig
+README.md
 
 
 ## [System Files]

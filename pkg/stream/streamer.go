@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"net/http"
 	"os"
+	"strings"
 
 	"go.uber.org/zap"
 
@@ -33,6 +34,11 @@ func NewStreamer(logger *zap.SugaredLogger) (*Streamer, error) {
 	upgrader := new(ws.Upgrader)
 	if os.Getenv("GO_ENV") == "development" {
 		upgrader.CheckOrigin = func(*http.Request) bool { return true }
+	} else {
+		upgrader.CheckOrigin = func(r *http.Request) bool {
+			nakedHost := r.Host[strings.Index(r.Host, "://")+3:]
+			return nakedHost != r.Header.Get("Origin")
+		}
 	}
 
 	return &Streamer{
@@ -42,6 +48,9 @@ func NewStreamer(logger *zap.SugaredLogger) (*Streamer, error) {
 	}, nil
 }
 
+// TODO: Get subreddit value from API path.
+// TODO: Make websockets only serve from /ws.
+// TODO: Handle ping / pong keepalive control frames from the frontend.
 func (s *Streamer) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	// Upgrade connection to TLS protocol.
 	conn, err := s.upgrader.Upgrade(w, r, nil)

@@ -1,0 +1,24 @@
+---
+
+apiVersion: v1
+kind: Service
+
+metadata:
+  name: rgv-entrypoint
+  namespace: default
+
+spec:
+  type: ClusterIP
+  selector:
+    app: rgv-entrypoint
+    tier: frontend
+    track: stable
+  ports:
+    - name: http
+      protocol: TCP
+      port: 80
+      targetPort: http
+    - name: https
+      protocol: TCP
+      port: 443
+      targetPort: https

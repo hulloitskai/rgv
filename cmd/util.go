@@ -1,18 +1,28 @@
 package cmd
 
 import (
-	"fmt"
 	"os"
+	"strings"
+
+	"go.uber.org/zap"
 
 	"github.com/joho/godotenv"
-	"go.uber.org/zap"
+	ess "github.com/unixpickle/essentials"
 )
 
 func loadEnv() {
-	err := godotenv.Load()
-	if err != nil {
-		fmt.Fprintln(os.Stderr, "Warning: no .env file was found in the local "+
-			"directory.")
+	var err error
+	if os.Getenv("GO_ENV") == "development" {
+		err = godotenv.Load(".env", ".env.local")
+	} else {
+		err = godotenv.Load("/secrets/env/.env")
+	}
+
+	if (err != nil) && !strings.Contains(
+		err.Error(),
+		"no such file or directory",
+	) {
+		ess.Die("Error while reading .env file:", err)
 	}
 }
 

@@ -54,7 +54,7 @@ func (s *Server) Shutdown(ctx context.Context) error {
 	}
 
 	if serr := s.l.Sync(); err == nil {
-		err = ess.AddCtx("server: final logger sync", serr)
+		err = ess.AddCtx("api: final logger sync", serr)
 	}
 	return err
 }
