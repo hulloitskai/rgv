@@ -2,47 +2,46 @@ package bot_test
 
 import (
 	"os"
+	"strings"
 	"testing"
 
-	"github.com/stevenxie/rgv/pkg/reddit"
-
 	"github.com/stevenxie/rgv/pkg/bot"
+	"github.com/stevenxie/rgv/pkg/reddit"
 )
 
 func TestBot_creds(t *testing.T) {
-	// Test without env config variables.
-	err := os.Unsetenv("REDDIT_CLIENT_ID")
-	err = os.Unsetenv("REDDIT_SECRET")
-	if err != nil {
-		t.Fatalf("Failed to unset env variable: %v", err)
+	// Test without env config.
+	envVars := []string{
+		"REDDIT_CLIENT_ID", "REDDIT_SECRET", "REDDIT_USER", "REDDIT_PASS",
+	}
+	for _, key := range envVars {
+		if err := os.Unsetenv(key); err != nil {
+			t.Fatalf("Failed to unset env variable '%s': %v", key, err)
+		}
 	}
 
 	b, err := bot.New(receiver{}, nil)
-	berr, ok := err.(*bot.Error)
-
-	if !ok {
-		t.Fatalf("Expected bot to return an error of type *bot.Error. Instead, "+
-			"got: %v", err)
-	}
-	if berr.Code != bot.InvalidConfig {
-		t.Error("Expected error to have the code bot.InvalidConfig.")
+	if err != nil {
+		t.Error("Expected empty-env bot creation to return without errors.")
 	}
 	if b == nil {
 		t.Error("Expected bot (made without env vars) to be non-nil.")
 	}
 
-	// Test with env config variables.
-	err = os.Setenv("REDDIT_CLIENT_ID", "someid")
-	err = os.Setenv("REDDIT_SECRET", "somesecret")
-	if err != nil {
+	// Test with incomplete env config.
+	if err = os.Setenv("REDDIT_USER", "testuser"); err != nil {
 		t.Fatalf("Failed to set env variable: %v", err)
 	}
-
-	if b, err = bot.New(receiver{}, nil); err != nil {
-		t.Errorf("Did not expect bot creation to return an error, but got: %v", err)
+	if b, err = bot.New(receiver{}, nil); err == nil {
+		t.Errorf("Expected invalid-env bot creation to return an error.")
 	}
-	if b == nil {
-		t.Error("Expected bot (made with env vars) to be non-nil.")
+	if !strings.Contains(err.Error(), "not all fields are filled") {
+		t.Errorf("Unexpcted bot creation error: %v", err)
+	} else {
+		t.Logf("Got bot creation error (expected): %v", err)
+	}
+	if b != nil {
+		t.Error("Expected bot (made with invalid env) to be nil.")
 	}
 }
 
