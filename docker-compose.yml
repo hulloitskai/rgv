@@ -13,7 +13,6 @@ services:
       context: .
       dockerfile: entrypoint.Dockerfile
       args:
-        plugins: ""  # extra Caddy plugins to build into the image
         BUILD_VERSION: "${VERSION}"
       cache_from:
         - stevenxie/rgv.entrypoint:latest

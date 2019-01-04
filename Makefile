@@ -331,7 +331,8 @@ snapshot:
 
 
 ## [Docker]
-.PHONY: dk-build dk-push dk-build-push dk-retag dk-up dk-down dk-logs
+.PHONY: dk-build dk-push dk-build-push dk-retag dk-up dk-build-up dk-down \
+        dk-logs
 
 DK = docker
 DKCMP = docker-compose
@@ -351,6 +352,10 @@ dk-push:
 
 dk-build-push: dk-build dk-push
 
+dk-pull:
+	@echo "Pulling latest images from registry..." && \
+	 VERSION=latest $(DKCMP) pull $(SVC)
+
 DK_RETAG_CMD = echo "Tagging versioned images with ':latest'..." && \
 	IMAGES="$$($(DKCMP_ENV) config | egrep image | awk '{print $$2}')" && \
 	for image in $$IMAGES; do \
@@ -365,13 +370,16 @@ dk-retag:
 	@$(DK_RETAG_CMD)
 
 dk-up:
-	@echo "Bringing up services..." && \
-	 $(DKCMP_ENV) up && \
+	@echo "Bringing up services..." && $(DKCMP_ENV) up -d ($SVC) && echo done
+
+dk-build-up:
+	@echo "Building and bringing up services..." && \
+	 $(DKCMP_ENV) up --build -d $(SVC) && \
 	 echo done
 
 dk-down:
 	@echo "Bringinging down services..." && \
-	 $(DKCMP_ENV) down && \
+	 $(DKCMP_ENV) down $(SVC) && \
 	 echo done
 
 dk-logs:

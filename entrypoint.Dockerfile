@@ -19,9 +19,8 @@ RUN yarn build
 RUN apk add bash upx
 
 ## Install Caddy (with plugins) from bash script.
-ARG plugins
-RUN PLUGINS=$(echo $plugins | tr ' ' ,) && \
-      wget -qO- https://getcaddy.com | bash -s personal $PLUGINS
+ENV PLUGINS=""
+RUN wget -qO- https://getcaddy.com | bash -s personal $PLUGINS
 
 ## Move Caddy to /build/.
 RUN mv /usr/local/bin/caddy .

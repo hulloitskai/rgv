@@ -1,3 +1,4 @@
+language: generic
 services: docker
 
 env:
@@ -43,7 +44,9 @@ before_install:
 
 
 ## Build images.
-install: make dk-build
+install:
+  - make dk-pull  # allows for caching from previous images
+  - make dk-build
 
 ## Test to see if entrypoint returns 200.
 script: ./scripts/test.sh
