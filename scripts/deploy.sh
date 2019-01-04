@@ -4,9 +4,7 @@
 printf 'Branches: $TRAVIS_BRANCH=%s $RELEASE_BRANCH=%s' \
   $TRAVIS_BRANCH $RELEASE_BRANCH
 
-if [ "$TRAVIS_BRANCH" == "$RELEASE_BRANCH" ]; then
-  make dk-push;
-else
+if [ "$TRAVIS_BRANCH" != "$RELEASE_BRANCH" ]; then
   echo "Not on branch '$RELEASE_BRANCH', aborting."
   exit 0
 fi

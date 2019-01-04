@@ -2,7 +2,6 @@ import Vue from "vue";
 import Router from "vue-router";
 
 import Home from "@/views/Home.vue";
-import Visualizer from "@/views/Visualizer.vue";
 import E404 from "@/views/E404.vue";
 
 const { BASE_URL } = process.env;
@@ -17,8 +16,7 @@ export default new Router({
     {
       path: "/r/:subreddit/",
       name: "visualizer",
-      // TODO: Use @import to modularize the JS.
-      component: Visualizer,
+      component: () => import("@/views/Visualizer"),
       pathToRegexpOptions: { strict: true },
     },
 

@@ -15,8 +15,6 @@ class Logger {
     const { NODE_ENV } = process.env;
     this.isDebug = NODE_ENV === "development";
     this.namespace = namespace;
-    const { log, info, error } = console;
-    Object.assign(this, { log, info, error, namespace });
   }
 
   ///////////////////////

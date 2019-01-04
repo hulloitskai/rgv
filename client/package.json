@@ -4,8 +4,8 @@
   "scripts": {
     "dev": "yarn serve",
     "serve": "vue-cli-service serve",
-    "build": "vue-cli-service build",
-    "lint": "vue-cli-service lint './src/**/*.{vue,js}' && prettier --write -l './src/**/*.{vue,sass,css}' './*.{js,json}'"
+    "build": "NODE_ENV=production vue-cli-service build",
+    "lint": "NODE_ENV=production vue-cli-service lint './src/**/*.{vue,js}' && prettier --write -l './src/**/*.{vue,sass,css}' './*.{js,json}'"
   },
   "dependencies": {
     "d3": "^3.5.17",

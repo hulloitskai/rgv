@@ -10,21 +10,24 @@
 
 <script>
 import Streamer from "@/services/streamer";
-import * as JSNX from "jsnetworkx";
-import * as d3 from "d3";
+import * as Drawing from "jsnetworkx/node/drawing";
 
-const { DiGraph } = JSNX;
+// Import JSNX.
+// import * as DiGraph from "jsnetworkx/node/classes/DiGraph";
+
+// Build D3.
+import { layout, select, scale, behavior, event } from "d3";
+const d3 = { layout, select, scale, behavior, event };
 
 // TODO: Add zoom-in zoom-out indicator / button.
 export default {
   data() {
     const { subreddit } = this.$route.params;
-    const graph = new DiGraph();
-
     return {
-      streamer: new Streamer(),
       isLive: false,
-      graph,
+      isMounted: false,
+      streamer: new Streamer(),
+      graph: undefined,
       subreddit,
     };
   },
@@ -67,45 +70,60 @@ export default {
     handleStatus(event) {
       this.isLive = event.type === "open";
     },
+    initDrawing() {
+      // Only start drawing if both 'isMounted' and 'graph !== undefined'.
+      const { isMounted, graph } = this;
+      if (!(isMounted && graph)) return;
+
+      // Initialize drawing.
+      const { "graph-container": container } = this.$refs;
+      Drawing.draw(
+        this.graph,
+        {
+          withLabels: true,
+          weighted: true,
+          layoutAttr: {
+            gravity: 0.035,
+            linkStrength: 0.4,
+          },
+          nodeAttr: {
+            r: ({ data }) => data.weight * 5,
+            class: "node node-shape",
+          },
+          labelAttr: {
+            class: "node-label",
+            transform: ({ data }) => `translate(0, ${data.weight * 5 + 10})`,
+          },
+          edgeAttr: { class: "line edge" },
+          element: container,
+          d3,
+        },
+        true
+      );
+
+      // Correct svg boundaries.
+      const svg = container.firstChild;
+      ["width", "height"].forEach(name => svg.setAttribute(name, "100%"));
+
+      // Start streamer.
+      const { streamer, subreddit } = this;
+      streamer.load(subreddit);
+      streamer.addEventListener("message", this.handleMessage);
+      ["open", "close"].forEach(type =>
+        streamer.addEventListener(type, this.handleStatus)
+      );
+    },
+  },
+  async created() {
+    const {
+      default: DiGraph,
+    } = await import("jsnetworkx/node/classes/DiGraph");
+    this.graph = new DiGraph();
+    this.initDrawing();
   },
   mounted() {
-    // Initialize graph drawing.
-    const { "graph-container": container } = this.$refs;
-    JSNX.draw(
-      this.graph,
-      {
-        withLabels: true,
-        weighted: true,
-        layoutAttr: {
-          gravity: 0.035,
-          linkStrength: 0.4,
-        },
-        nodeAttr: {
-          r: ({ data }) => data.weight * 5,
-          class: "node node-shape",
-        },
-        labelAttr: {
-          class: "node-label",
-          transform: ({ data }) => `translate(0, ${data.weight * 5 + 10})`,
-        },
-        edgeAttr: { class: "line edge" },
-        element: container,
-        d3,
-      },
-      true
-    );
-
-    // Correct svg boundaries.
-    const svg = container.firstChild;
-    ["width", "height"].forEach(name => svg.setAttribute(name, "100%"));
-
-    // Start streamer.
-    const { streamer, subreddit } = this;
-    streamer.load(subreddit);
-    streamer.addEventListener("message", this.handleMessage);
-    ["open", "close"].forEach(type =>
-      streamer.addEventListener(type, this.handleStatus)
-    );
+    this.isMounted = true;
+    this.initDrawing();
   },
   beforeDestroy() {
     const { streamer } = this;
