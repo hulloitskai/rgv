@@ -4,8 +4,11 @@ import router from "./router";
 import store from "./store";
 
 // Install plugins:
-import VTooltip from "v-tooltip";
-Vue.use(VTooltip);
+import Tooltip from "v-tooltip";
+Vue.use(Tooltip);
+
+import Meta from "vue-meta";
+Vue.use(Meta);
 
 // Uncomment to enable PWA capabilities:
 //import "./registerServiceWorker";

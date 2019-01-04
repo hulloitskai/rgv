@@ -1,5 +1,5 @@
 import Logger from "@/utils/logger";
-import { getOpt } from "@/utils/utils";
+import { getAPIURL } from "@/utils/utils";
 
 /**
  * A Streamer is able to stream Reddit activity from the rgv API server.
@@ -27,13 +27,11 @@ class Streamer {
     }
 
     // Create and connect websocket, configure API server.
-    const API_URL = getOpt("API_URL");
-    if (!API_URL) {
-      this.l.error("Env var API_URL was not set.");
-      return;
-    }
+    let protocol = "ws";
+    if (location.protocol === "https:") protocol = "wss";
 
-    const ws = new WebSocket(API_URL);
+    const wsURL = `${protocol}://${getAPIURL()}`;
+    const ws = new WebSocket(wsURL);
     ws.addEventListener("open", event => {
       this.l.debug("Websocket opened:", event);
 

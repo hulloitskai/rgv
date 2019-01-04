@@ -11,10 +11,11 @@
 <script>
 import Streamer from "@/services/streamer";
 import * as JSNX from "jsnetworkx";
-import * as D3 from "d3";
+import * as d3 from "d3";
 
 const { DiGraph } = JSNX;
 
+// TODO: Add zoom-in zoom-out indicator / button.
 export default {
   data() {
     const { subreddit } = this.$route.params;
@@ -76,7 +77,7 @@ export default {
         withLabels: true,
         weighted: true,
         layoutAttr: {
-          gravity: 0.04,
+          gravity: 0.035,
           linkStrength: 0.4,
         },
         nodeAttr: {
@@ -88,8 +89,8 @@ export default {
           transform: ({ data }) => `translate(0, ${data.weight * 5 + 10})`,
         },
         edgeAttr: { class: "line edge" },
-        d3: D3,
         element: container,
+        d3,
       },
       true
     );
@@ -112,6 +113,13 @@ export default {
     ["open", "close"].forEach(type =>
       streamer.removeEventListener(type, this.handleStatus)
     );
+  },
+  metaInfo: {
+    title: "RGV",
+    titleTemplate(name) {
+      const { subreddit } = this.$route.params;
+      return `${name}: ${subreddit}`;
+    },
   },
 };
 </script>
