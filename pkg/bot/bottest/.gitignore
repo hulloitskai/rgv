@@ -1,6 +1,0 @@
-## The compiled binary:
-/build/
-/dist/
-/*bottest*
-!/*bottest*.*
-/*bottest*.exe

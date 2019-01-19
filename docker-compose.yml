@@ -8,40 +8,41 @@ version: "3.7"
 
 services:
   entrypoint:
-    image: "stevenxie/rgv.entrypoint:${VERSION}"
+    image: "stevenxie/rgv-entrypoint:${VERSION}"
     build:
       context: .
-      dockerfile: entrypoint.Dockerfile
+      dockerfile: ./client/Dockerfile
       args:
         BUILD_VERSION: "${VERSION}"
       cache_from:
-        - stevenxie/rgv.entrypoint:latest
+        - stevenxie/rgv-entrypoint:latest
         - alpine:3.8
     container_name: entrypoint
     command: ["-agree"]
     environment:
       - HOST=http://localhost:80
       - API=http://api:3000
-      - GO_ENV=development
     networks:
       - public
     ports:
       - "8080:80" # for development
 
   api:
-    image: "stevenxie/rgv.api:${VERSION}"
+    image: "stevenxie/rgv-api:${VERSION}"
     build:
       context: .
-      dockerfile: api.Dockerfile
+      dockerfile: ./api/Dockerfile
       args:
         BUILD_VERSION: "${VERSION}"
       cache_from:
-        - stevenxie/rgv.api:latest
+        - stevenxie/rgv-api:latest
         - alpine:3.8
         - golang:alpine
     container_name: api
     depends_on:
       - entrypoint
+    environment:
+      - GO_ENV=development
     networks:
       - public
     ports:
