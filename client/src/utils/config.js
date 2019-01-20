@@ -1,3 +1,7 @@
+/**
+ * @param {string} key
+ * @returns {string}
+ */
 const getOpt = key => process.env[`VUE_APP_${key}`];
 
 // Set API_URL.

@@ -1,0 +1,15 @@
+apiVersion: v1
+version: "0.1.2"
+
+name: rgv
+appVersion: "0.1.1"
+description: >
+  A tool for visualizing the relationships amongst the users of a subreddit.
+
+home: https://github.com/stevenxie/rgv
+sources:
+  - https://github.com/stevenxie/rgv
+
+maintainers:
+  - name: Steven Xie
+    email: dev@stevenxie.me

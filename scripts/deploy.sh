@@ -4,8 +4,8 @@
 printf "Branches: $TRAVIS_BRANCH=%s $RELEASE_BRANCH=%s\n" \
   $TRAVIS_BRANCH $RELEASE_BRANCH && \
 
-if [ "$TRAVIS_BRANCH" != "$RELEASE_BRANCH" ] && [ -z "$TRAVIS_TAG" ]; then
-  echo "Not on branch '$RELEASE_BRANCH' and not a tag build, aborting."
+if [ "$TRAVIS_BRANCH" != "$RELEASE_BRANCH" ]; then
+  echo "Not on branch '$RELEASE_BRANCH', skipping deployment."
   exit 0
 fi
 
