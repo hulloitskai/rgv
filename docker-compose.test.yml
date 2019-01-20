@@ -5,17 +5,17 @@ version: "3.4"
 
 services:
   frontend_test:
-    image: "stevenxie/rgv-entrypoint:${VERSION}"
+    image: "stevenxie/rgv-frontend:${VERSION}"
     build:
       context: .
       dockerfile: ./client/Dockerfile
       args:
         BUILD_VERSION: "${VERSION}"
       cache_from:
-        - stevenxie/rgv-entrypoint:latest
+        - stevenxie/rgv-frontend:latest
         - alpine:3.8
     container_name: frontend_test
-    command: ["-validate"]
+    command: ["nginx", "-t"]
 
   api_test:
     image: "golang:1.11"

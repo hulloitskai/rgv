@@ -35,8 +35,7 @@ spec:
             - name: env
               mountPath: "/secrets/env"
           ports:
-            - name: api
-              containerPort: 3000
+            - containerPort: 3000
       volumes:
         - name: env
           secret:

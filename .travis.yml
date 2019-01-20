@@ -6,9 +6,6 @@ os:
   - linux
 services: docker
 
-git:
-  depth: 3
-
 env:
   ## Required external variables:
   ##   - DOCKER_USER, DOCKER_PASS
