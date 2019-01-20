@@ -6,15 +6,12 @@ os:
   - linux
 services: docker
 
-git:
-  depth: 3
-
 env:
   ## Required external variables:
   ##   - DOCKER_USER, DOCKER_PASS
   ##   - GH_TOKEN, GH_KUBECONFIG_PATH
   global:
-    - DEPLOYMENTS="rgv-api rgv-entrypoint"
+    - DEPLOYMENTS="rgv-api rgv-frontend"
     - RELEASE_BRANCH=master
     - DOCKER_COMPOSE_VERSION="1.23.2"
 

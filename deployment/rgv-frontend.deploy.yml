@@ -4,14 +4,14 @@ apiVersion: apps/v1
 kind: Deployment
 
 metadata:
-  name: rgv-entrypoint
+  name: rgv-frontend
   namespace: default
 
 spec:
   replicas: 1
   selector:
     matchLabels:
-      app: rgv-entrypoint
+      app: rgv-frontend
       tier: frontend
       track: stable
   strategy:
@@ -23,24 +23,22 @@ spec:
   template:
     metadata:
       labels:
-        app: rgv-entrypoint
+        app: rgv-frontend
         tier: frontend
         track: stable
     spec:
       containers:
-        - name: rgv-entrypoint
-          image: "stevenxie/rgv-entrypoint"
+        - name: rgv-frontend
+          image: "stevenxie/rgv-frontend"
           imagePullPolicy: Always
-          args: ["-agree"]
-          ## Configure Caddy site mappings using env variables.
-          env:
-            - name: API
-              value: http://rgv-api:3000
-          envFrom:
-            - configMapRef:
-                name: rgv-entrypoint-config
           ports:
             - name: http
               containerPort: 80
-            - name: https
-              containerPort: 443
+          livenessProbe:
+            httpGet:
+              path: /
+              port: http
+          readinessProbe:
+            httpGet:
+              path: /
+              port: http

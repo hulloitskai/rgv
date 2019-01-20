@@ -7,21 +7,17 @@
 version: "3.7"
 
 services:
-  entrypoint:
-    image: "stevenxie/rgv-entrypoint:${VERSION}"
+  frontend:
+    image: "stevenxie/rgv-frontend:${VERSION}"
     build:
       context: .
       dockerfile: ./client/Dockerfile
       args:
         BUILD_VERSION: "${VERSION}"
       cache_from:
-        - stevenxie/rgv-entrypoint:latest
+        - stevenxie/rgv-frontend:latest
         - alpine:3.8
-    container_name: entrypoint
-    command: ["-agree"]
-    environment:
-      - HOST=http://localhost:80
-      - API=http://api:3000
+    container_name: frontend
     networks:
       - public
     ports:
@@ -40,7 +36,7 @@ services:
         - golang:alpine
     container_name: api
     depends_on:
-      - entrypoint
+      - frontend
     environment:
       - GO_ENV=development
     networks:
