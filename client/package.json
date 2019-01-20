@@ -1,5 +1,5 @@
 {
-  "name": "rgv.client",
+  "name": "rgv-client",
   "private": true,
   "scripts": {
     "dev": "yarn serve",
@@ -10,7 +10,6 @@
   "dependencies": {
     "d3": "^3.5.17",
     "jsnetworkx": "^0.3.4",
-    "prettier": "^1.15.3",
     "register-service-worker": "^1.5.2",
     "v-tooltip": "^2.0.0-rc.33",
     "vue": "^2.5.21",
@@ -28,6 +27,7 @@
     "eslint": "^5.11.1",
     "eslint-plugin-vue": "^5.0.0",
     "node-sass": "^4.11.0",
+    "prettier": "^1.15.3",
     "sass-loader": "^7.1.0",
     "vue-template-compiler": "^2.5.21"
   }

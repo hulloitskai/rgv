@@ -29,7 +29,7 @@ spec:
     spec:
       containers:
         - name: rgv-entrypoint
-          image: "stevenxie/rgv.entrypoint"
+          image: "stevenxie/rgv-entrypoint"
           imagePullPolicy: Always
           args: ["-agree"]
           ## Configure Caddy site mappings using env variables.

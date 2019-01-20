@@ -1,7 +1,7 @@
 ## [Repository]
-/*rgv*
-!/*rgv*.*
-/*rgv*.exe
+/api/*rgv*
+!/api/*rgv*.*
+/api/*rgv*.exe
 
 ## Client:
 /client/dist/

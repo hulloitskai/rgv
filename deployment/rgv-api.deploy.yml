@@ -29,7 +29,7 @@ spec:
     spec:
       containers:
         - name: rgv-api
-          image: "stevenxie/rgv.api"
+          image: "stevenxie/rgv-api"
           imagePullPolicy: Always
           volumeMounts:
             - name: env
