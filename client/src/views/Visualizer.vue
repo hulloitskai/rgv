@@ -11,13 +11,7 @@
 <script>
 import Streamer from "@/services/streamer";
 import * as Drawing from "jsnetworkx/node/drawing";
-
-// Import JSNX.
-// import * as DiGraph from "jsnetworkx/node/classes/DiGraph";
-
-// Build D3.
-import { layout, select, scale, behavior, event } from "d3";
-const d3 = { layout, select, scale, behavior, event };
+import * as d3 from "d3"; // cannot be modularized due to event mechanism
 
 // TODO: Add zoom-in zoom-out indicator / button.
 export default {
