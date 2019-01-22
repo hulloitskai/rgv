@@ -29,6 +29,36 @@ _TODO: Add more information about features._
 
 ## Deployment
 
+### With Helm
+
+`rgv` can be deployed with [Helm](https://helm.sh), using the repo located at
+https://charts.stevenxie.me:
+
+```bash
+## Add repository.
+helm repo add stevenxie https://charts.stevenxie.me
+
+## Install the chart.
+helm install -f values.yaml -n rgv stevenxie/rgv
+```
+
+#### Configuration:
+
+See
+[`deployment/charts/rgv/values.yaml`](https://github.com/stevenxie/charts/blob/master/deployment/charts/rgv/values.yaml)
+for an the default `values.yaml` configuration.
+
+To install `rgv` for production, one should have an Ingress controller in the
+target namespace, and configure a `values.yaml` with an appropriate
+`ingress.host` value:
+
+```yaml
+ingress:
+  host: rgv.stevenxie.me # example
+```
+
+### Manually
+
 `rgv` is configured to build as a set of two Docker images (a frontend and an
 API server), and to deploy on Kubernetes.
 
@@ -38,9 +68,7 @@ To deploy `rgv`, create the Kubernetes resources defined in `deployment/`:
 cat deployment/* | kubectl create -f -
 ```
 
-### Exposure Options
-
-#### Load Balancer:
+#### Exposure with Load Balancer:
 
 > This is the easier way to make `rgv` publicly accessible; however, this
 > requires the use of a load balancer, which may be cost-prohibitive.
@@ -55,7 +83,7 @@ spec:
 "
 ```
 
-#### Ingress Controller:
+#### Exposure with Ingress Controller:
 
 > This method requires for you to have preconfigured an Ingress controller, like
 > [Traefik](https://docs.traefik.io/user-guide/kubernetes/), which will route

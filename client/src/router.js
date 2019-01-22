@@ -2,7 +2,7 @@ import Vue from "vue";
 import Router from "vue-router";
 
 import Home from "@/views/Home.vue";
-import E404 from "@/views/E404.vue";
+import NotFound from "@/views/NotFound.vue";
 
 const { BASE_URL } = process.env;
 
@@ -29,6 +29,6 @@ export default new Router({
     },
 
     // Catch-all fallback to 404 page.
-    { path: "*", name: "404", component: E404 },
+    { path: "*", name: "404", component: NotFound },
   ],
 });
