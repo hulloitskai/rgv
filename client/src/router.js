@@ -16,7 +16,8 @@ export default new Router({
     {
       path: "/r/:subreddit/",
       name: "visualizer",
-      component: () => import("@/views/Visualizer"),
+      component: () =>
+        import(/* webpackChunkName: "visualizer" */ "@/views/Visualizer"),
       pathToRegexpOptions: { strict: true },
     },
 
