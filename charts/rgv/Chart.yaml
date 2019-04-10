@@ -1,10 +1,9 @@
 apiVersion: v1
-version: "0.1.2"
+version: 0.2.0
 
 name: rgv
 appVersion: "0.1.1"
-description: >
-  A tool for visualizing the relationships amongst the users of a subreddit.
+description: A tool for visualizing relationships on Reddit.
 
 home: https://github.com/stevenxie/rgv
 sources:
